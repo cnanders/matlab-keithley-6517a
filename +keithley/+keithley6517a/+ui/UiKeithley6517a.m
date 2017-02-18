@@ -1,4 +1,4 @@
-classdef Keithley6517a < HandlePlus
+classdef UiKeithley6517a < HandlePlus
     
     
     
@@ -98,7 +98,7 @@ classdef Keithley6517a < HandlePlus
             
     methods
         
-        function this = Keithley6517a(varargin)
+        function this = UiKeithley6517a(varargin)
 
             % Override properties with varargin
             
@@ -121,7 +121,11 @@ classdef Keithley6517a < HandlePlus
             this.api.init();
             this.api.connect();
             
-            this.hoData.setApi(ApiKeithley6517aData(this.api));
+            import keithley.keithley6517a.ui.translators.HardwareOPlusFromKeithley6517a;
+            import keithley.keithley6517a.ui.translators.HardwareIOPlusFromKeithley6517a;
+            import keithley.keithley6517a.ui.translators.HardwareIOTextFromKeithley6517a;
+            
+            this.hoData.setApi(HardwareOPlusFromKeithley6517a(this.api, 'data'));
             
             this.setApiRange();
             this.setApiSettings();
@@ -133,8 +137,12 @@ classdef Keithley6517a < HandlePlus
                 return
             end
             
-            this.hioRange.setApi(ApiKeithley6517aRange(this.api));
-            this.hiotxAutoRangeState.setApi(ApiKeithley6517aAutoRangeState(this.api));
+            import keithley.keithley6517a.ui.translators.HardwareOPlusFromKeithley6517a;
+            import keithley.keithley6517a.ui.translators.HardwareIOPlusFromKeithley6517a;
+            import keithley.keithley6517a.ui.translators.HardwareIOTextFromKeithley6517a;
+            
+            this.hioRange.setApi(HardwareIOPlusFromKeithley6517a(this.api, 'range'));
+            this.hiotxAutoRangeState.setApi(HardwareIOTextFromKeithley6517a(this.api, 'auto-range-state'));
                             
         end
         
@@ -143,22 +151,28 @@ classdef Keithley6517a < HandlePlus
                 return
             end 
             
-            this.hioADCPeriod.setApi(ApiKeithley6517aAdcPeriod(this.api));
-            this.hiotxAvgFiltState.setApi(ApiKeithley6517aAvgFiltState(this.api));
-            this.hiotxAvgFiltType.setApi(ApiKeithley6517aAvgFiltType(this.api));
-            this.hiotxAvgFiltMode.setApi(ApiKeithley6517aAvgFiltMode(this.api));
-            this.hioAvgFiltSize.setApi(ApiKeithley6517aAvgFiltSize(this.api));
-            this.hiotxMedFiltState.setApi(ApiKeithley6517aMedFiltState(this.api));
-            this.hioMedFiltRank.setApi(ApiKeithley6517aMedFiltRank(this.api));
+            import keithley.keithley6517a.ui.translators.HardwareOPlusFromKeithley6517a;
+            import keithley.keithley6517a.ui.translators.HardwareIOPlusFromKeithley6517a;
+            import keithley.keithley6517a.ui.translators.HardwareIOTextFromKeithley6517a;
+            
+            this.hioADCPeriod.setApi(HardwareIOPlusFromKeithley6517a(this.api, 'adc-period'));
+            this.hiotxAvgFiltState.setApi(HardwareIOTextFromKeithley6517a(this.api, 'avg-filt-state'));
+            this.hiotxAvgFiltType.setApi(HardwareIOTextFromKeithley6517a(this.api, 'avg-filt-type'));
+            this.hiotxAvgFiltMode.setApi(HardwareIOTextFromKeithley6517a(this.api, 'avg-filt-mode'));
+            this.hioAvgFiltSize.setApi(HardwareIOPlusFromKeithley6517a(this.api, 'avg-filt-state'));
+            this.hiotxMedFiltState.setApi(HardwareIOTextFromKeithley6517a(this.api, 'med-filt-state'));
+            this.hioMedFiltRank.setApi(HardwareIOPlusFromKeithley6517a(this.api, 'med-filt-rank'));
             
         end
         
                 
         function setApiv(this, api)
             
+            import keithley.keithley6517a.ui.translators.HardwareOPlusFromKeithley6517a;
+            
             this.apiv = api;
            
-            this.hoData.setApiv(ApiKeithley6517aData(this.apiv));
+            this.hoData.setApiv(HardwareOPlusFromKeithley6517a(this.apiv, 'data'));
             this.setApivRange();
             this.setApivSettings();
             
@@ -169,8 +183,12 @@ classdef Keithley6517a < HandlePlus
                 return
             end
             
-            this.hioRange.setApiv(ApiKeithley6517aRange(this.apiv));
-            this.hiotxAutoRangeState.setApiv(ApiKeithley6517aAutoRangeState(this.apiv));
+            import keithley.keithley6517a.ui.translators.HardwareOPlusFromKeithley6517a;
+            import keithley.keithley6517a.ui.translators.HardwareIOPlusFromKeithley6517a;
+            import keithley.keithley6517a.ui.translators.HardwareIOTextFromKeithley6517a;
+            
+            this.hioRange.setApiv(HardwareIOPlusFromKeithley6517a(this.apiv, 'range'));
+            this.hiotxAutoRangeState.setApiv(HardwareIOTextFromKeithley6517a(this.apiv, 'auto-range-state'));
                             
         end
         
@@ -179,13 +197,17 @@ classdef Keithley6517a < HandlePlus
                 return
             end 
             
-            this.hioADCPeriod.setApiv(ApiKeithley6517aAdcPeriod(this.apiv));
-            this.hiotxAvgFiltState.setApiv(ApiKeithley6517aAvgFiltState(this.apiv));
-            this.hiotxAvgFiltType.setApiv(ApiKeithley6517aAvgFiltType(this.apiv));
-            this.hiotxAvgFiltMode.setApiv(ApiKeithley6517aAvgFiltMode(this.apiv));
-            this.hioAvgFiltSize.setApiv(ApiKeithley6517aAvgFiltSize(this.apiv));
-            this.hiotxMedFiltState.setApiv(ApiKeithley6517aMedFiltState(this.apiv));
-            this.hioMedFiltRank.setApiv(ApiKeithley6517aMedFiltRank(this.apiv));
+            import keithley.keithley6517a.ui.translators.HardwareOPlusFromKeithley6517a;
+            import keithley.keithley6517a.ui.translators.HardwareIOPlusFromKeithley6517a;
+            import keithley.keithley6517a.ui.translators.HardwareIOTextFromKeithley6517a;
+            
+            this.hioADCPeriod.setApiv(HardwareIOPlusFromKeithley6517a(this.apiv, 'adc-period'));
+            this.hiotxAvgFiltState.setApiv(HardwareIOTextFromKeithley6517a(this.apiv, 'avg-filt-state'));
+            this.hiotxAvgFiltType.setApiv(HardwareIOTextFromKeithley6517a(this.apiv, 'avg-filt-type'));
+            this.hiotxAvgFiltMode.setApiv(HardwareIOTextFromKeithley6517a(this.apiv, 'avg-filt-mode'));
+            this.hioAvgFiltSize.setApiv(HardwareIOPlusFromKeithley6517a(this.apiv, 'avg-filt-size'));
+            this.hiotxMedFiltState.setApiv(HardwareIOTextFromKeithley6517a(this.apiv, 'med-filt-state'));
+            this.hioMedFiltRank.setApiv(HardwareIOPlusFromKeithley6517a(this.apiv, 'med-filt-rank'));
             
         end
         
@@ -347,14 +369,14 @@ classdef Keithley6517a < HandlePlus
             % Remove event listeners
             
            
-            delete(this.lhAutoRangeStat);
+            delete(this.lhAutoRangeState);
             delete(this.lhAvgFiltState);
             delete(this.lhMedFiltState);
         
             delete(this.hioADCPeriod);
-            delete(this.hiotxAvgFiltStat);
+            delete(this.hiotxAvgFiltState);
             delete(this.hiotxAvgFiltType);
-            delete(this.hiotxAvgFiltMod);
+            delete(this.hiotxAvgFiltMode);
             delete(this.hioAvgFiltSize);
             delete(this.hiotxMedFiltState);
             delete(this.hioMedFiltRank);
@@ -595,7 +617,7 @@ classdef Keithley6517a < HandlePlus
             this.uitApi.setTooltip(this.cTooltipApiOff);
             this.uitxName = UIText(this.cName, 'left');
             
-            configData =  ConfigHardwareIOPlus(fullfile(this.cPath, 'config-data.json'));
+            configData =  ConfigHardwareIOPlus(fullfile(this.cPath, '+config', 'config-data.json'));
             this.hoData = HardwareOPlus(...
                 'cName', sprintf('%s-data', this.cName), ...
                 'cLabel', 'AMPS:', ...
@@ -631,7 +653,9 @@ classdef Keithley6517a < HandlePlus
                 return
             end
             
-            configAutoRangeState = ConfigHardwareIOText(fullfile(this.cPath, 'config-auto-range-state.json'));
+            configAutoRangeState = ConfigHardwareIOText(fullfile(this.cPath, '+config', 'config-auto-range-state.json'));
+            configRange = ConfigHardwareIOPlus(fullfile(this.cPath, '+config', 'config-range.json'));
+
             this.hiotxAutoRangeState = HardwareIOText(...
                 'cName', sprintf('%s-auto-range-state', this.cName), ...
                 'cLabel', 'AUTO RANGE', ...
@@ -648,7 +672,6 @@ classdef Keithley6517a < HandlePlus
                 'clock', this.clock ...
             );
             
-            configRange = ConfigHardwareIOPlus(fullfile(this.cPath, 'config-range.json'));
             this.hioRange = HardwareIOPlus(...
                 'cName', sprintf('%s-range', this.cName), ...
                 'cLabel', 'VALUE (A)', ...
@@ -678,7 +701,15 @@ classdef Keithley6517a < HandlePlus
                 return
             end
                         
-            configADCPeriod = ConfigHardwareIOPlus(fullfile(this.cPath, 'config-adc-period.json'));
+            configADCPeriod = ConfigHardwareIOPlus(fullfile(this.cPath, '+config', 'config-adc-period.json'));
+            configAvgFiltState = ConfigHardwareIOText(fullfile(this.cPath, '+config', 'config-avg-filt-state.json'));
+            configAvgFiltType = ConfigHardwareIOText(fullfile(this.cPath, '+config', 'config-avg-filt-type.json'));
+            configAvgFiltMode = ConfigHardwareIOText(fullfile(this.cPath, '+config', 'config-avg-filt-mode.json'));
+            configAvgFiltSize = ConfigHardwareIOPlus(fullfile(this.cPath, '+config', 'config-avg-filt-size.json'));
+            configMedFiltState = ConfigHardwareIOText(fullfile(this.cPath, '+config', 'config-med-filt-state.json'));
+            configMedFiltRank = ConfigHardwareIOPlus(fullfile(this.cPath, '+config', 'config-med-filt-rank.json'));
+
+            
             this.hioADCPeriod = HardwareIOPlus(...
                 'cName', sprintf('%s-adc-period', this.cName), ...
                 'cLabel', 'ADC PERIOD (ms)', ...
@@ -700,7 +731,6 @@ classdef Keithley6517a < HandlePlus
                 'clock', this.clock ...
             );
 
-            configAvgFiltState = ConfigHardwareIOText(fullfile(this.cPath, 'config-avg-filt-state.json'));
             this.hiotxAvgFiltState = HardwareIOText(...
                 'cName', sprintf('%s-avg-filt-state', this.cName), ...
                 'cLabel', 'AVG. FILTER', ...
@@ -715,7 +745,6 @@ classdef Keithley6517a < HandlePlus
                 'clock', this.clock ...
             );
 
-            configAvgFiltType = ConfigHardwareIOText(fullfile(this.cPath, 'config-avg-filt-type.json'));
             this.hiotxAvgFiltType = HardwareIOText(...
                 'cName', sprintf('%s-avg-filt-type', this.cName), ...
                 'cLabel', '    TYPE', ...
@@ -730,7 +759,6 @@ classdef Keithley6517a < HandlePlus
                 'clock', this.clock ...
             );
 
-            configAvgFiltMode = ConfigHardwareIOText(fullfile(this.cPath, 'config-avg-filt-mode.json'));
             this.hiotxAvgFiltMode = HardwareIOText(...
                 'cName', sprintf('%s-avg-filt-mode', this.cName), ...
                 'cLabel', '    MODE', ...
@@ -746,7 +774,6 @@ classdef Keithley6517a < HandlePlus
             );
 
 
-            configAvgFiltSize = ConfigHardwareIOPlus(fullfile(this.cPath, 'config-avg-filt-size.json'));
             this.hioAvgFiltSize = HardwareIOPlus(...
                 'cName', sprintf('%s-avg-filt-size', this.cName), ...
                 'cLabel', '    SIZE', ...
@@ -768,7 +795,6 @@ classdef Keithley6517a < HandlePlus
                 'clock', this.clock ...
             );
 
-            configMedFiltState = ConfigHardwareIOText(fullfile(this.cPath, 'config-med-filt-state.json'));
             this.hiotxMedFiltState = HardwareIOText(...
                 'cName', sprintf('%s-med-filt-state', this.cName), ...
                 'cLabel', 'MED FILT', ...
@@ -784,7 +810,6 @@ classdef Keithley6517a < HandlePlus
             );
 
 
-            configMedFiltRank = ConfigHardwareIOPlus(fullfile(this.cPath, 'config-med-filt-rank.json'));
             this.hioMedFiltRank =  HardwareIOPlus(...
                 'cName', sprintf('%s-med-filter-rank', this.cName), ...
                 'cLabel', '    RANK', ...

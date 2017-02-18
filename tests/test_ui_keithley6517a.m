@@ -1,9 +1,9 @@
-[cPath, cName, cExt] = fileparts(mfilename('fullpath'));
+[cDirThis, cName, cExt] = fileparts(mfilename('fullpath'));
 
-% Add mic
-addpath(genpath(fullfile(cPath, '..', '..')));
+% Add package and libs
+addpath(genpath(fullfile(cDirThis, '..')));
 
 purge
 
-test = TestKeithley6517a();
-test.build();
+ui = TestUiKeithley6517a();
+ui.build();

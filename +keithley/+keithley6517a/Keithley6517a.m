@@ -28,13 +28,17 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         
         function init(this)
             
+            this.msg('init');
             if this.lSerial
                 % Serial
+                this.msg('init (serial)');
                 this.s = serial(this.cPort);
                 this.s.Terminator = this.cTerminator; 
                 this.s.BaudRate = this.u16BaudRate;
             else
+                
                 % GPIB
+                this.msg('init (serial)');
                 this.s = gpib('ni', 0, this.u8GpibAddress);
                 this.connect();
                 % this.s.EOSCharCode = this.cTerminator;
@@ -48,6 +52,8 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
                 try
                     fopen(this.s); 
                 catch ME
+                    this.msg('connect ERROR');
+                    rethrow(ME)
                 end
             end
         end
@@ -58,6 +64,8 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
                 try
                     fclose(this.s);
                 catch ME
+                    this.msg('disconnect ERROR');
+                    rethrow(ME)
                 end
             end
             
@@ -332,7 +340,7 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         end
         
         function delete(this)
-            this.msg('delete()')'
+            this.msg('delete()');
             this.disconnect();
             delete(this.s);
         end

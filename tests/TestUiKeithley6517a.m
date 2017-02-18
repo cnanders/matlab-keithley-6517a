@@ -1,11 +1,11 @@
-classdef TestKeithley6517a < HandlePlus
+classdef TestUiKeithley6517a < HandlePlus
     %TESTKEITHLEY6517a Summary of this class goes here
     %   Detailed explanation goes here
     
     properties
         clock
-        keithley6517a
-        api
+        ui
+        device
     end
     
     properties (Access = private)
@@ -17,33 +17,33 @@ classdef TestKeithley6517a < HandlePlus
     
     methods
         
-        function this = TestKeithley6517a()
+        function this = TestUiKeithley6517a()
         
             this.clock = Clock('master');
-            this.keithley6517a = Keithley6517a(...
+            this.ui = keithley.keithley6517a.ui.UiKeithley6517a(...
                 'clock', this.clock, ...
-                'lShowSettings', true, ...
+                'lShowSettings', false, ...
                 'lShowRange', true ...
             );
         
             % Set the Api
-            % this.api = ApiKeithley6517aAsync();
-            this.api = ApivKeithley6517a();
-            this.keithley6517a.setApi(this.api);
+            this.device = keithley.keithley6517a.Keithley6517a();
+            % this.device = keithley.keithley6517a.Keithley6517aVirtual();
+            this.ui.setApi(this.device);
             
         end
         
         function build(this)
             
             this.h = figure;
-            this.keithley6517a.build(this.h, 10, 10);
+            this.ui.build(this.h, 10, 10);
             
         end
         
         
         function delete(this)
             this.msg('delete', 5);
-            delete(this.keithley6517a);
+            delete(this.ui);
             delete(this.clock);
         end
     

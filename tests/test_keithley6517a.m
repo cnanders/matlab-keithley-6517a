@@ -11,8 +11,6 @@ inst.setFunctionToAmps();
 
 cIdentity = inst.identity()
 
-
-%{
 inst.setIntegrationPeriod(100e-3)
 dPeriod = inst.getIntegrationPeriod()
 
@@ -40,4 +38,3 @@ inst.setMedianRank(3)
 cMedianState = inst.getMedianState()
 u8MedianRank = inst.getMedianRank()
 
-%}
