@@ -110,6 +110,20 @@ classdef AbstractKeithley6517a < handle
         d = getDataLatest(this)
         d = getDataFresh(this)
         
+        % Configure the Format properties returned by queries to :data?
+        % (options are (READing, CHANnel, RNUMber, UNITs, TSTamp, STATus,
+        % ETEMperature, HUMidity, and VSOurce)
+        setDataFormatElements(this, c)
+        
+        % Get the elements of Format subsystem
+        c = getDataFormatElements(this)
+        
+        
+        c = getDataFormat(this)
+        
+        % @param {char 1xm)
+        setDataFormatGpib(this, cFormat)
+        
     end
     
 end

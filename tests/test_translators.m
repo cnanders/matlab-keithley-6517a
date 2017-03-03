@@ -1,3 +1,7 @@
+if exist('purge') > 0
+    purge
+end
+
 [cDirThis, cName, cExt] = fileparts(mfilename('fullpath'));
 
 % Add package
@@ -8,8 +12,12 @@ inst = keithley.keithley6517a.Keithley6517a('lSerial', true);
 inst.init()
 inst.connect()
 inst.setFunctionToAmps();
-
 cIdentity = inst.identity()
+
+
+deviceData = keithley.keithley6517a.ui.translators.HardwareOPlusFromKeithley6517a(inst, 'data');
+deviceRange = keithley.keithley6517a.ui.translators.HardwareIOPlusFromKeithley6517a(inst, 'range');
+deviceAutoRangeState = keithley.keithley6517a.ui.translators.HardwareIOTextFromKeithley6517a(inst, 'auto-range-state');
 
 return
 

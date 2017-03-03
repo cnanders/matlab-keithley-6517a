@@ -1,6 +1,25 @@
 classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
 
     % Can only use ASCII format with RS232.  Need GPIB to use other formats
+    
+    properties (Constant)
+        
+        % Used for setting the data format of GPIB communications
+        cDATA_FORMAT_IEEE754_SINGLE = 'SRE'
+        cDATA_FORMAT_IEEE754_DOUBLE = 'DRE'
+        cDATA_FORMAT_ASCII = 'ASC'
+        
+        
+        % See this.cDataFormatElements
+        cDATA_FORMAT_ELEMENTS_READ = 'READ'
+        cDATA_FORMAT_ELEMENTS_READ_UNIT = 'READ,UNIT'
+        
+        
+        cCONNECTION_RS232 = 'rs232'
+        cCONNECTION_GPIB = 'gpib';
+        
+    end
+        
     properties % (Access = private)
      
         % {serial 1x1}
@@ -10,12 +29,64 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         u8GpibAddress = 28;
         cPort = 'COM1';
         cTerminator = 'CR/LF'; % Default for Instrument does not support any other
-        u16BaudRate = uint16(19200); % 9600
-        lSerial = true;
+        
+        % {double 1x1} - timeout of MATLAB {serial}.  Amount of time it
+        % will wait for a response before aborting
+        dTimeout = 2
+        
+        % MUST match the setting on the hardware
+        % Menu -> Communication -> RS-232 -> Baud 
+        u16BaudRate = uint16(9600); % 19200 not working 3/2/2017
+        
+        
+        % IMPORTANT
+        % Must configure instrument correctly:
+        % Menu -> Communication -> RS232 -> Elements
+        % Everything should be off except RDG
+        % **** RDG=y (reading) ****
+        % RDG#=n (reading# since instrument turned on)
+        % UNIT=n (unit)
+        % CH#=n (channel)
+        % HUM=n (humidity)
+        % ETEMP=n (temp)
+        % TIME=n (timestamp)
+        % STATUS=n
+        % VSRC=n (voltage source)
+        
+        % Store then number of serial commands issued
+        dCommandNum = 0;
+        cConnection
+        
+        % {char 1xm} GPIB data format. Must be set to one of the this.cDATA_FORMAT_*
+        % constants.  Serial communication only works with ASCII 
+        % data format
+        cDataFormatGpib
+        
+        % {char 1xm} Used for setting which elements are returned from a
+        % getData() query.  Must be set to one of the this.cDATA_FORMAT_ELEMENTS_*
+        % constants. Only going to code support for 'READ' (single
+        % property in getData()) but will structure code so that if more
+        % elements/properties are desired in a single read, can add a new
+        % constant here and add it to a switch block in the dataRead() and
+        % unpack the data appropriately
+        cDataFormatElements 
+        
+        cGpibVendor = 'ni';
     end
     methods 
         
-        function this = Keithley6517a(varargin)   
+        function this = Keithley6517a(varargin)
+            
+            % Default connection
+            this.cConnection = this.cCONNECTION_RS232;
+            
+            % Default data elements
+            this.cDataFormatElements = this.cDATA_FORMAT_ELEMENTS_READ;
+            
+            % Default GPIB data format
+            this.cDataFormatGpib = this.cDATA_FORMAT_ASCII; % IEEE754_SINGLE;
+            % this.cDataFormatGpib = this.cDATA_FORMAT_IEEE754_SINGLE;
+            
             % Override properties with varargin
             for k = 1 : 2: length(varargin)
                 % this.msg(sprintf('passed in %s', varargin{k}));
@@ -29,22 +100,83 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         function init(this)
             
             this.msg('init');
-            if this.lSerial
-                % Serial
-                this.msg('init (serial)');
-                this.s = serial(this.cPort);
-                this.s.Terminator = this.cTerminator; 
-                this.s.BaudRate = this.u16BaudRate;
-            else
-                
-                % GPIB
-                this.msg('init (serial)');
-                this.s = gpib('ni', 0, this.u8GpibAddress);
-                this.connect();
-                % this.s.EOSCharCode = this.cTerminator;
-                
-            end            
+            switch this.cConnection
+                case this.cCONNECTION_RS232
+                    % Serial
+                    this.msg('init (RS-232 / serial)');
+                    try
+                        this.s = serial(this.cPort);
+                    catch me
+                        cMsg = sprintf(...
+                            [ ...
+                                'The MATLAB serial object could not be instantiated. Not to worry.  Try this: \n', ...
+                                '1. Make sure the instrument is configured to communicate over RS232. \n', ...
+                                'MENU -> COMMUNICATION -> RS-232 \n', ...
+                                '2. Check the serial cable to the hardware. \n', ...
+                            ] ...
+                        );
+                        this.msg(cMsg);
+                        rethrow(me);
+                    end
+                    
+                    this.s.Terminator = this.cTerminator; 
+                    this.s.BaudRate = this.u16BaudRate;
+                    this.s.Timeout = this.dTimeout;
+                    this.connect();
+                case this.cCONNECTION_GPIB                
+                    % GPIB
+                    this.msg('init (GPIB)');
+                    try
+                        this.s = gpib(this.cGpibVendor, 0, this.u8GpibAddress);
+                    catch me
+                        cMsg = sprintf(...
+                            [ ...
+                                'The MATLAB gpib object could not be instantiated. Not to worry.  Try this: \n', ...
+                                '1. Make sure the instrument is configured to communicate over GPIB. \n', ...
+                                'MENU -> COMMUNICATION -> GPIB \n', ...
+                                '2. Make sure the GPIB addrees matches this.u8GpibAddress (%s) \n', ...
+                                'MENU -> COMMUNICATION -> GPIB -> ADDRESSABLE -> ADDRESS \n', ...
+                                 '(This property is settable using varargin syntax on instantiation \n', ...
+                                '3. Check the GPIB cable to the hardware. \n', ...
+                            ], ...
+                            this.u8GpibAddress ...
+                        );
+                        this.msg(cMsg);
+                        rethrow(me);
+                    end
+                    this.connect();
+                    this.setDataFormatGpib(this.cDataFormatGpib);
+                    
+                    % this.s.EOSCharCode = this.cTerminator;
+            end
+            this.setDataFormatElements(this.cDataFormatElements);
             
+        end
+        
+        function setDataFormatElements(this, cElements)
+            cCmd = sprintf(':form:elem %s', cElements);
+            this.writeToSerial(cCmd)
+        end
+        
+        function c = getDataFormatElements(this)
+            cCmd = ':form:elem?';
+            this.writeToSerial(cCmd);
+            c = fscanf(this.s);
+        end
+        
+        % @param {char 1xm} - data format. Use this.cDataFormat* constants
+        % RS232 only supports ASCII. If any other format that ASCII is
+        % provided, the command has no effect. 
+        
+        function setDataFormatGpib(this, cFormat)
+            cCmd = sprintf(':form %s', cFormat);
+            this.writeToSerial(cCmd);
+        end
+            
+        function c = getDataFormat(this)
+            cCmd = ':form?';
+            this.writeToSerial(cCmd);
+            c = fscanf(this.s);
         end
         
         function connect(this)
@@ -56,10 +188,13 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
                     rethrow(ME)
                 end
             end
+            this.clearBytesAvailable();
         end
+        
         
         function disconnect(this)
             this.msg('disconnect()');
+            this.clearBytesAvailable();
             if strcmp(this.s.Status, 'open')
                 try
                     fclose(this.s);
@@ -74,16 +209,35 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         function c = identity(this)
             cCommand = '*IDN?';
             %tic
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             %toc
             %tic
             c = fscanf(this.s);
             %toc
         end
         
+        function clearBytesAvailable(this)
+            
+            % This doesn't alway work.  I've found that if I overfill the
+            % input buffer, call this method, then do a subsequent read,
+            % the results come back all with -1.6050e9.  Need to figure
+            % this out
+            
+            % this.msg('clearBytesAvailable()');
+            
+            while this.s.BytesAvailable > 0
+                cMsg = sprintf(...
+                    'clearBytesAvailable() clearing %1.0f bytes', ...
+                    this.s.BytesAvailable ...
+                );
+                this.msg(cMsg);
+                fread(this.s, this.s.BytesAvailable);
+            end
+        end
+        
         function setFunctionToAmps(this)
             cCommand = ':func "curr"';
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
         end
         
         % Set the speed (integration time) of the ADC.  
@@ -114,7 +268,7 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
             end
                 
             cCommand = sprintf(':curr:nplc %1.3f', dPLC);
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             
         end
         
@@ -122,13 +276,13 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
             % [:SENSe[1]]:curr[:DC]:aper <n>
             % <n> =166.6666666667e-6 to 200e-3 Integration period in seconds
             cCommand = sprintf(':curr:aper %1.5e', dPeriod);
-             fprintf(this.s, cCommand);
+             this.writeToSerial(cCommand);
         end
         
         function d = getIntegrationPeriod(this)
             cCommand = ':curr:aper?'; 
             %tic
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             %toc
             %tic
             c = fscanf(this.s);
@@ -143,7 +297,7 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
 %         function getIntegrationPeriodA(this)
 %             cCommand = ':curr:aper?'; 
 %             tic
-%             fprintf(this.s, cCommand);
+%             this.writeToSerial(cCommand);
 %             toc 
 %         end
 %         
@@ -158,7 +312,7 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         
         function d = getIntegrationPeriodPLC(this)
             cCommand = ':curr:nplc?';
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             d = str2double(fscanf(this.s));
         end
         
@@ -171,12 +325,12 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
             % ON
             % OFF
             cCommand = sprintf(':curr:aver %s', cVal);
-             fprintf(this.s, cCommand);
+             this.writeToSerial(cCommand);
         end
         
         function c = getAverageState(this)
             cCommand = ':curr:aver?';
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             c = fscanf(this.s);
             c = this.stateText(c);
         end
@@ -190,12 +344,12 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
             % SCALar
             % ADVanced
             cCommand = sprintf(':curr:aver:type %s', cVal);
-             fprintf(this.s, cCommand);
+             this.writeToSerial(cCommand);
         end
         
         function c = getAverageType(this)
             cCommand = ':curr:aver:type?';
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             c = fscanf(this.s);
         end
         
@@ -206,12 +360,12 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
             % REPeat
             % MOVing
             cCommand = sprintf(':curr:aver:tcon %s', cVal);
-             fprintf(this.s, cCommand);
+             this.writeToSerial(cCommand);
         end
         
         function c = getAverageMode(this)
             cCommand = ':curr:aver:tcon?';
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             c = fscanf(this.s);
         end
         
@@ -220,11 +374,11 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         function setAverageCount(this, u8Val) 
             % [:SENSe[1]]:curr[:DC]:aver:coun <n>
             cCommand = sprintf(':curr:aver:coun %u', u8Val);
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
         end
         
         function u8 = getAverageCount(this)
-            fprintf(this.s, ':curr:aver:coun?');
+            this.writeToSerial(':curr:aver:coun?');
             % do not cast as uint8 becasue it screws with HIO
             u8 = str2double(fscanf(this.s));
         end
@@ -238,13 +392,13 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         function setMedianState(this, cVal)
             % [:SENSe[1]]:curr[:DC]:med[:STATe] <b>
             cCommand = sprintf(':curr:med %s', cVal);
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
         end
         
         
         function c = getMedianState(this)
             cCommand = ':curr:med?';
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             c = fscanf(this.s);
             c = this.stateText(c);
         end
@@ -255,13 +409,13 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         % 7, 9, 11 samples, respectively]
         function setMedianRank(this,  u8Val)
             cCommand = sprintf(':curr:med:rank %u', u8Val);
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             % [:SENSe[1]]:curr[:DC]:med:RANK <NRf>
         end
         
         function u8 = getMedianRank(this)
             cCommand = ':curr:med:rank?';
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             % do not cast as uint8 because it screws with HIO
             u8 = str2double(fscanf(this.s));
         end
@@ -274,12 +428,12 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         function setRange(this, dAmps)
            % [:SENSe[1]]:curr[:DC]:rang[:UPPer] <n> 
            cCommand = sprintf(':curr:rang %1.3e', dAmps);
-           fprintf(this.s, cCommand);
+           this.writeToSerial(cCommand);
         end
             
         function d = getRange(this)
             cCommand = ':curr:rang?';
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             d = str2double(fscanf(this.s));
         end
         
@@ -287,12 +441,12 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         % @param {char 1xm} cVal - the state: "ON" of "OFF" 
         function setAutoRangeState(this, cVal)
             cCommand = sprintf(':curr:rang:auto %s', cVal);
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
         end
         
         function c = getAutoRangeState(this)
             cCommand = ':curr:rang:auto?';
-            fprintf(this.s, cCommand);
+            this.writeToSerial(cCommand);
             c = fscanf(this.s);
             c = this.stateText(c);
         end
@@ -311,32 +465,45 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         function setAutoRangeUpperLimit(this, dVal)  
         end
        
-        % IMPORTANT
-        % Must configure instrument correctly:
-        % Menu -> Communication -> RS232 -> Elements
-        % Everything should be off except RDG
-        % **** RDG=y (reading) ****
-        % RDG#=n (reading# since instrument turned on)
-        % UNIT=n (unit)
-        % CH#=n (channel)
-        % HUM=n (humidity)
-        % ETEMP=n (temp)
-        % TIME=n (timestamp)
-        % STATUS=n
-        % VSRC=n (voltage source)
+        
         function d = getDataLatest(this) 
+           this.clearBytesAvailable();
            cCommand = ':data:lat?';
-           fprintf(this.s, cCommand);
+           this.writeToSerial(cCommand);
            c = fscanf(this.s);
-           d = str2double(c);
-           
+           d = this.dataToDouble(c);
         end
         
         function d = getDataFresh(this)
            cCommand = ':data:fres?';
-           fprintf(this.s, cCommand);
+           this.writeToSerial(cCommand);
            c = fscanf(this.s);
-           d = str2double(c); 
+           d = this.dataToDouble(c);
+        end
+        
+        % @param {char 1xm} return of a :data? command.  Will be in
+        % different formats depending on this.cConnection and
+        % this.cDataFormatGpib
+        
+        function d = dataToDouble(this, c)
+            
+            switch this.cConnection
+               case this.cCONNECTION_RS232
+                   % Always uses ASCII
+                    d = str2double(c);
+               case this.cCONNECTION_GPIB
+                   % Can use ASCII or IEEE754 (Single or Double)
+                   switch this.cDataFormatGpib
+                       case this.cDATA_FORMAT_ASCII
+                           d = str2double(c);
+                       case this.cDATA_FORMAT_IEEE754_SINGLE
+                           % Requires github/cnanders/matlab-ieee
+                           d = c
+                       case this.cDATA_FORMAT_IEEE754_DOUBLE
+                           d = c
+                   end
+           end
+            
         end
         
         function delete(this)
@@ -344,6 +511,14 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
             this.disconnect();
             delete(this.s);
         end
+        
+        function writeToSerial(this, c)
+            cMsg = sprintf('writeToSerial %1.0f: %s', this.dCommandNum, c);
+            this.msg(cMsg)
+            fprintf(this.s, c)
+            this.dCommandNum = this.dCommandNum + 1;
+        end
+        
         
     end
     
@@ -387,6 +562,8 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
             end
             
         end
+        
+        % @param {char 1xm} c - SPCI serial command
         
     end
     

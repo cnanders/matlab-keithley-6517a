@@ -45,6 +45,7 @@ classdef UiKeithley6517a < HandlePlus
         uitxName
         
         cPath = fileparts(mfilename('fullpath'));
+        cDirConfig
         uitApi      % toggle for real / virtual Api
         apiv
         api
@@ -100,6 +101,7 @@ classdef UiKeithley6517a < HandlePlus
         
         function this = UiKeithley6517a(varargin)
 
+            this.cDirConfig = fullfile(this.cPath, '..', '..', '..', 'config', 'ui');
             % Override properties with varargin
             
             for k = 1 : 2: length(varargin)
@@ -134,6 +136,7 @@ classdef UiKeithley6517a < HandlePlus
         
         function setApiRange(this)
             if ~this.lShowRange
+                this.msg('setApiRange aborting: not showing')
                 return
             end
             
@@ -148,6 +151,7 @@ classdef UiKeithley6517a < HandlePlus
         
         function setApiSettings(this)
             if ~this.lShowSettings
+                this.msg('setApiSettings aborting: not showing')
                 return
             end 
             
@@ -617,7 +621,7 @@ classdef UiKeithley6517a < HandlePlus
             this.uitApi.setTooltip(this.cTooltipApiOff);
             this.uitxName = UIText(this.cName, 'left');
             
-            configData =  ConfigHardwareIOPlus(fullfile(this.cPath, '+config', 'config-data.json'));
+            configData =  ConfigHardwareIOPlus(fullfile(this.cDirConfig, 'config-data.json'));
             this.hoData = HardwareOPlus(...
                 'cName', sprintf('%s-data', this.cName), ...
                 'cLabel', 'AMPS:', ...
@@ -653,8 +657,8 @@ classdef UiKeithley6517a < HandlePlus
                 return
             end
             
-            configAutoRangeState = ConfigHardwareIOText(fullfile(this.cPath, '+config', 'config-auto-range-state.json'));
-            configRange = ConfigHardwareIOPlus(fullfile(this.cPath, '+config', 'config-range.json'));
+            configAutoRangeState = ConfigHardwareIOText(fullfile(this.cDirConfig, 'config-auto-range-state.json'));
+            configRange = ConfigHardwareIOPlus(fullfile(this.cDirConfig, 'config-range.json'));
 
             this.hiotxAutoRangeState = HardwareIOText(...
                 'cName', sprintf('%s-auto-range-state', this.cName), ...
@@ -701,13 +705,13 @@ classdef UiKeithley6517a < HandlePlus
                 return
             end
                         
-            configADCPeriod = ConfigHardwareIOPlus(fullfile(this.cPath, '+config', 'config-adc-period.json'));
-            configAvgFiltState = ConfigHardwareIOText(fullfile(this.cPath, '+config', 'config-avg-filt-state.json'));
-            configAvgFiltType = ConfigHardwareIOText(fullfile(this.cPath, '+config', 'config-avg-filt-type.json'));
-            configAvgFiltMode = ConfigHardwareIOText(fullfile(this.cPath, '+config', 'config-avg-filt-mode.json'));
-            configAvgFiltSize = ConfigHardwareIOPlus(fullfile(this.cPath, '+config', 'config-avg-filt-size.json'));
-            configMedFiltState = ConfigHardwareIOText(fullfile(this.cPath, '+config', 'config-med-filt-state.json'));
-            configMedFiltRank = ConfigHardwareIOPlus(fullfile(this.cPath, '+config', 'config-med-filt-rank.json'));
+            configADCPeriod = ConfigHardwareIOPlus(fullfile(this.cDirConfig, 'config-adc-period.json'));
+            configAvgFiltState = ConfigHardwareIOText(fullfile(this.cDirConfig, 'config-avg-filt-state.json'));
+            configAvgFiltType = ConfigHardwareIOText(fullfile(this.cDirConfig, 'config-avg-filt-type.json'));
+            configAvgFiltMode = ConfigHardwareIOText(fullfile(this.cDirConfig, 'config-avg-filt-mode.json'));
+            configAvgFiltSize = ConfigHardwareIOPlus(fullfile(this.cDirConfig, 'config-avg-filt-size.json'));
+            configMedFiltState = ConfigHardwareIOText(fullfile(this.cDirConfig, 'config-med-filt-state.json'));
+            configMedFiltRank = ConfigHardwareIOPlus(fullfile(this.cDirConfig, 'config-med-filt-rank.json'));
 
             
             this.hioADCPeriod = HardwareIOPlus(...
@@ -850,7 +854,7 @@ classdef UiKeithley6517a < HandlePlus
             
         function api = newApiv(this)
         %@return {AIVKeithley6482}
-            api = ApivKeithley6517a;
+            api = keithley.keithley6517a.Keithley6517aVirtual();
         end
         
         function onAutoRangeStateChange(this, src, evt)

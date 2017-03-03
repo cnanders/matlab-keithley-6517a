@@ -14,13 +14,16 @@ classdef HardwareOPlusFromKeithley6517a < InterfaceApiHardwareOPlus
         end
         
         function d = get(this) % retrieve value
+            cMsg = sprintf('get %s', this.cProp);
+            % this.msg(cMsg);
             switch this.cProp
                 case 'data'
                     d = this.device.getDataLatest();
             end
         end
         
-        function l = isInitialized(true)
+        function l = isInitialized(this)
+            % this.msg('isInitialized')
             l = false;
         end
         

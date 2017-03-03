@@ -14,6 +14,9 @@ classdef HardwareIOTextFromKeithley6517a < InterfaceApiHardwareIOText
         end
         
         function c = get(this) % retrieve value
+            
+            cMsg = sprintf('get() %s', this.cProp);
+            % this.msg(cMsg);
             switch this.cProp
                 case 'auto-range-state'
                     c = this.device.getAutoRangeState();
