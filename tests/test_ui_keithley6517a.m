@@ -5,7 +5,7 @@ end
 [cDirThis, cName, cExt] = fileparts(mfilename('fullpath'));
 
 % Add package and libs
-addpath(genpath(fullfile(cDirThis, '..', 'pkg')));
+addpath(genpath(fullfile(cDirThis, '..', 'src')));
 
 % Add cnanders/github/mic dependency (assumed one dir above)
 addpath(genpath(fullfile(cDirThis, '..', '..', 'mic')));
