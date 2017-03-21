@@ -24,8 +24,12 @@ classdef TestUiKeithley6517a < HandlePlus
                 'lShowRange', false ...
             );
         
+            
             % Set the Api
-            this.device = keithley.keithley6517a.Keithley6517a();
+            this.device = keithley.keithley6517a.Keithley6517a( ...
+                'cConnection', keithley.keithley6517a.Keithley6517a.cCONNECTION_GPIB ...
+            );
+            this.device.init();
             % this.device = keithley.keithley6517a.Keithley6517aVirtual();
             this.ui.setApi(this.device);
             

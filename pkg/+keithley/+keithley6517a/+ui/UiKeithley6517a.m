@@ -34,7 +34,7 @@ classdef UiKeithley6517a < HandlePlus
     properties (SetAccess = private)
         
         cName = 'KEITHLEY6517A';
-        cLabel = 'Keithley6517a';
+        cLabel = 'Keithley 6517a';
         lActive = false
         
     end
@@ -42,7 +42,7 @@ classdef UiKeithley6517a < HandlePlus
     properties (Access = protected)
         clock
         
-        uitxName
+        uitxLabel
         
         cPath = fileparts(mfilename('fullpath'));
         cDirConfig
@@ -119,9 +119,9 @@ classdef UiKeithley6517a < HandlePlus
         
         function setApi(this, api)
             
+            % Assumes the device is already initialized and connected and
+            % ready for commands
             this.api = api;
-            this.api.init();
-            this.api.connect();
             
             import keithley.keithley6517a.ui.translators.HardwareOPlusFromKeithley6517a;
             import keithley.keithley6517a.ui.translators.HardwareIOPlusFromKeithley6517a;
@@ -253,7 +253,7 @@ classdef UiKeithley6517a < HandlePlus
             end
             
             
-            this.uitxName.build(this.hPanel, ...
+            this.uitxLabel.build(this.hPanel, ...
                 dLeft + this.dWidthBtn + 5, ... % left
                 dTop + (this.dHeightBtn - this.dHeightText)/2, ... % top
                 this.dWidthName, ... % width 
@@ -619,9 +619,10 @@ classdef UiKeithley6517a < HandlePlus
                 st2 ...
             );
             this.uitApi.setTooltip(this.cTooltipApiOff);
-            this.uitxName = UIText(this.cName, 'left');
+            this.uitxLabel = UIText(this.cLabel, 'left');
             
-            configData =  ConfigHardwareIOPlus(fullfile(this.cDirConfig, 'config-data.json'));
+            cPathConfigData = fullfile(this.cDirConfig, 'config-data.json');
+            configData =  ConfigHardwareIOPlus(cPathConfigData);
             this.hoData = HardwareOPlus(...
                 'cName', sprintf('%s-data', this.cName), ...
                 'cLabel', 'AMPS:', ...

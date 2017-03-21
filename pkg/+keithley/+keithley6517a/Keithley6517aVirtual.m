@@ -16,6 +16,9 @@ classdef Keithley6517aVirtual < keithley.keithley6517a.AbstractKeithley6517a
         u8MedianRank = uint8(3)
         dRange = 20e-6
         cAutoRangeState = 'OFF'
+        cDataFormatElements = 'READ'
+        cDataFormatGpib = 'ASCII'
+        
         
         % {double 1x1} - mean reported current 
         dMean = 100e-6;
@@ -168,6 +171,27 @@ classdef Keithley6517aVirtual < keithley.keithley6517a.AbstractKeithley6517a
         
         function d = getDataFresh(this)
             d = this.getDataLatest();
+        end
+        
+        % Configure the Format properties returned by queries to :data?
+        % (options are (READing, CHANnel, RNUMber, UNITs, TSTamp, STATus,
+        % ETEMperature, HUMidity, and VSOurce)
+        function setDataFormatElements(this, c)
+            this.cDataFormatElements = c;
+        end
+        
+        % Get the elements of Format subsystem
+        function c = getDataFormatElements(this)
+            c = this.cDataFormatElements;
+        end
+        
+        function c = getDataFormat(this)
+            c = this.cDataFormatGpib;
+        end
+        
+        % @param {char 1xm)
+        function setDataFormatGpib(this, cFormat)
+            this.cDataFormatGpib = cFormat;
         end
         
     end

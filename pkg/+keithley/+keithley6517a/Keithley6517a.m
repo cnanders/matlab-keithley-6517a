@@ -104,8 +104,15 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
                 case this.cCONNECTION_RS232
                     % Serial
                     this.msg('init (RS-232 / serial)');
+                    this.s = serial(this.cPort);
+                    this.s.Terminator = this.cTerminator; 
+                    this.s.BaudRate = this.u16BaudRate;
+                    this.s.Timeout = this.dTimeout;
+                    this.connect();
+                    
+                    %{
                     try
-                        this.s = serial(this.cPort);
+                        
                     catch me
                         cMsg = sprintf(...
                             [ ...
@@ -118,11 +125,7 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
                         this.msg(cMsg);
                         rethrow(me);
                     end
-                    
-                    this.s.Terminator = this.cTerminator; 
-                    this.s.BaudRate = this.u16BaudRate;
-                    this.s.Timeout = this.dTimeout;
-                    this.connect();
+                    %}
                 case this.cCONNECTION_GPIB                
                     % GPIB
                     this.msg('init (GPIB)');
@@ -513,8 +516,8 @@ classdef Keithley6517a < keithley.keithley6517a.AbstractKeithley6517a
         end
         
         function writeToSerial(this, c)
-            cMsg = sprintf('writeToSerial %1.0f: %s', this.dCommandNum, c);
-            this.msg(cMsg)
+            % cMsg = sprintf('writeToSerial %1.0f: %s', this.dCommandNum, c);
+            % this.msg(cMsg)
             fprintf(this.s, c)
             this.dCommandNum = this.dCommandNum + 1;
         end

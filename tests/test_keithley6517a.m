@@ -1,14 +1,19 @@
+if exist('purge') > 0
+    purge
+end
+
+
 [cDirThis, cName, cExt] = fileparts(mfilename('fullpath'));
 
 % Add package
 addpath(genpath(fullfile(cDirThis, '..', 'pkg')));
 
-inst = keithley.keithley6517a.Keithley6517a('lSerial', true);
+inst = keithley.keithley6517a.Keithley6517a(...
+    'cConnection', keithley.keithley6517a.Keithley6517a.cCONNECTION_GPIB ...
+);
 
 inst.init()
-inst.connect()
 inst.setFunctionToAmps();
-
 cIdentity = inst.identity()
 
 return
